@@ -1,16 +1,19 @@
 use crate::{
-    config::Config,
-    exchange::{ExchangeClient, mock::{MockClient, HistoricalData}},
     bot::TradingBot,
-    state::BotState,
+    config::Config,
+    exchange::{
+        ExchangeClient,
+        mock::{HistoricalData, MockClient},
+    },
     fear_greed::FearGreedIndex,
+    state::BotState,
 };
+use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use rust_decimal::Decimal;
-use chrono::{DateTime, Utc};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BacktestResult {
@@ -70,20 +73,23 @@ impl Backtester {
         let mut combined_data: HashMap<DateTime<Utc>, HashMap<String, Decimal>> = HashMap::new();
 
         let asset = &self.config.assets.crypto_symbol;
-        let file_path = format!("backtest-data/{}_prices_{}d.json", asset.to_lowercase(), days);
+        let file_path = format!(
+            "backtest-data/{}_prices_{}d.json",
+            asset.to_lowercase(),
+            days
+        );
         let content = std::fs::read_to_string(&file_path)
-            .map_err(|e| anyhow::anyhow!("Failed to read price data for {}: {}", asset, e))?;
-        
+            .map_err(|e| anyhow::anyhow!("Failed to read price data for {asset}: {e}"))?;
+
         let asset_data: Vec<serde_json::Value> = serde_json::from_str(&content)?;
-        
+
         for item in asset_data {
-            if let (Some(timestamp_str), Some(prices)) = (
-                item["timestamp"].as_str(),
-                item["prices"].as_object(),
-            ) {
+            if let (Some(timestamp_str), Some(prices)) =
+                (item["timestamp"].as_str(), item["prices"].as_object())
+            {
                 if let Ok(timestamp) = timestamp_str.parse::<DateTime<Utc>>() {
-                    let entry = combined_data.entry(timestamp).or_insert_with(HashMap::new);
-                    
+                    let entry = combined_data.entry(timestamp).or_default();
+
                     for (symbol, price_value) in prices {
                         let price_decimal = if let Some(price_num) = price_value.as_f64() {
                             Decimal::from_f64_retain(price_num).unwrap_or_default()
@@ -108,14 +114,17 @@ impl Backtester {
         self.historical_data = historical_data;
 
         // Load Fear & Greed data
-        let fear_greed_file = format!("backtest-data/fear_greed_{}d.json", days);
+        let fear_greed_file = format!("backtest-data/fear_greed_{days}d.json");
         if std::path::Path::new(&fear_greed_file).exists() {
             let content = std::fs::read_to_string(&fear_greed_file)?;
             self.fear_greed_data = serde_json::from_str(&content)?;
         }
 
-        println!("Loaded {} historical data points and {} Fear & Greed data points",
-            self.historical_data.len(), self.fear_greed_data.len());
+        println!(
+            "Loaded {} historical data points and {} Fear & Greed data points",
+            self.historical_data.len(),
+            self.fear_greed_data.len()
+        );
 
         Ok(())
     }
@@ -130,12 +139,22 @@ impl Backtester {
 
         // Create initial balances
         let mut initial_balances = HashMap::new();
-        initial_balances.insert(self.config.assets.fiat_symbol.clone(), self.config.assets.initial_fiat_amount);
-        initial_balances.insert(self.config.assets.crypto_symbol.clone(), self.config.assets.initial_crypto_amount);
+        initial_balances.insert(
+            self.config.assets.fiat_symbol.clone(),
+            self.config.assets.initial_fiat_amount,
+        );
+        initial_balances.insert(
+            self.config.assets.crypto_symbol.clone(),
+            self.config.assets.initial_crypto_amount,
+        );
 
         // Create mock client with historical data
-        let mock_client = Arc::new(MockClient::new(self.historical_data.clone(), initial_balances.clone()));
-        let exchange: Arc<Mutex<dyn ExchangeClient>> = Arc::new(Mutex::new(mock_client.as_ref().clone()));
+        let mock_client = Arc::new(MockClient::new(
+            self.historical_data.clone(),
+            initial_balances.clone(),
+        ));
+        let exchange: Arc<Mutex<dyn ExchangeClient>> =
+            Arc::new(Mutex::new(mock_client.as_ref().clone()));
 
         // Create bot state
         let bot_state = BotState::new(
@@ -149,7 +168,7 @@ impl Backtester {
 
         // Track portfolio values for drawdown calculation
         let mut portfolio_values = Vec::new();
-        let mut max_value = Decimal::ZERO;
+        let mut max_value: Decimal;
         let mut max_drawdown = Decimal::ZERO;
 
         // Get initial portfolio value
@@ -158,8 +177,8 @@ impl Backtester {
         portfolio_values.push(initial_portfolio_value);
         max_value = initial_portfolio_value;
 
-        println!("Starting backtest from {} to {}", start_date, end_date);
-        println!("Initial portfolio value: {}", initial_portfolio_value);
+        println!("Starting backtest from {start_date} to {end_date}");
+        println!("Initial portfolio value: {initial_portfolio_value}");
 
         // Run simulation
         for (i, data_point) in self.historical_data.iter().enumerate() {
@@ -168,12 +187,15 @@ impl Backtester {
 
             // Get Fear & Greed index for this timestamp
             let fear_greed_index = self.get_fear_greed_for_timestamp(data_point.timestamp);
-            
+
             // Run bot cycle with current market data, simulation time, and Fear & Greed override
-            bot.run_cycle_with_options(Some(data_point.timestamp), fear_greed_index).await?;
+            bot.run_cycle_with_options(Some(data_point.timestamp), fear_greed_index)
+                .await?;
 
             // Calculate current portfolio value
-            let current_portfolio_value = bot.get_state().get_total_portfolio_value(&data_point.prices);
+            let current_portfolio_value = bot
+                .get_state()
+                .get_total_portfolio_value(&data_point.prices);
             portfolio_values.push(current_portfolio_value);
 
             // Update max value and calculate drawdown
@@ -187,14 +209,20 @@ impl Backtester {
             }
 
             // Print progress
-            if i % 24 == 0 { // Every day (24 hours)
-                println!("Day {}: Portfolio value: {}, Active baskets: {}",
-                    i / 24, current_portfolio_value, bot.get_state().active_baskets.len());
+            if i % 24 == 0 {
+                // Every day (24 hours)
+                println!(
+                    "Day {}: Portfolio value: {}, Active baskets: {}",
+                    i / 24,
+                    current_portfolio_value,
+                    bot.get_state().active_baskets.len()
+                );
             }
         }
 
         // Calculate final results
-        let final_prices: HashMap<String, Decimal> = self.historical_data.last().unwrap().prices.clone();
+        let final_prices: HashMap<String, Decimal> =
+            self.historical_data.last().unwrap().prices.clone();
         let final_portfolio_value = bot.get_state().get_total_portfolio_value(&final_prices);
         let total_return = final_portfolio_value - initial_portfolio_value;
         let total_return_percent = if initial_portfolio_value > Decimal::ZERO {
@@ -228,8 +256,8 @@ impl Backtester {
         };
 
         println!("\nBacktest completed!");
-        println!("Total return: {} ({:.2}%)", total_return, total_return_percent);
-        println!("Max drawdown: {} ({:.2}%)", max_drawdown, max_drawdown_percent);
+        println!("Total return: {total_return} ({total_return_percent:.2}%)");
+        println!("Max drawdown: {max_drawdown} ({max_drawdown_percent:.2}%)");
         println!("Win rate: {:.2}%", stats.win_rate);
 
         Ok(result)
@@ -243,13 +271,11 @@ impl Backtester {
             .cloned()
     }
 
-
     pub fn save_result(&self, result: &BacktestResult) -> anyhow::Result<()> {
         let filename = format!("backtest-data/backtest_result_{}d.json", result.period_days);
         let json = serde_json::to_string_pretty(result)?;
         std::fs::write(&filename, json)?;
-        println!("Backtest result saved to {}", filename);
+        println!("Backtest result saved to {filename}");
         Ok(())
     }
 }
-

@@ -1,8 +1,7 @@
 use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
-use rust_decimal::Decimal;
-use std::collections::HashMap;
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Price {
@@ -33,12 +32,10 @@ pub trait ExchangeClient: Send + Sync {
     async fn get_prices(&self, symbols: &[String]) -> anyhow::Result<Vec<Price>>;
     async fn buy(&self, symbol: &str, amount: Decimal) -> anyhow::Result<OrderResult>;
     async fn sell(&self, symbol: &str, quantity: Decimal) -> anyhow::Result<OrderResult>;
-    async fn get_balance(&self, asset: &str) -> anyhow::Result<Decimal>;
+    // async fn get_balance(&self, asset: &str) -> anyhow::Result<Decimal>;
 }
 
 pub mod mock;
 pub mod okx;
 
 // Re-export commonly used types
-pub use mock::MockClient;
-pub use okx::OkxClient;

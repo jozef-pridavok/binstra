@@ -1,9 +1,9 @@
-use crate::exchange::{ExchangeClient, Price, OrderResult, OrderSide};
+use crate::exchange::{ExchangeClient, OrderResult, OrderSide, Price};
 use async_trait::async_trait;
-use rust_decimal::Decimal;
 use chrono::{DateTime, Utc};
-use std::collections::HashMap;
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -20,7 +20,10 @@ pub struct MockClient {
 }
 
 impl MockClient {
-    pub fn new(historical_data: Vec<HistoricalData>, initial_balances: HashMap<String, Decimal>) -> Self {
+    pub fn new(
+        historical_data: Vec<HistoricalData>,
+        initial_balances: HashMap<String, Decimal>,
+    ) -> Self {
         Self {
             historical_data,
             current_index: Arc::new(Mutex::new(0)),
@@ -28,12 +31,12 @@ impl MockClient {
         }
     }
 
-    pub fn advance_time(&self) {
-        let mut index = self.current_index.lock().unwrap();
-        if *index < self.historical_data.len() - 1 {
-            *index += 1;
-        }
-    }
+    // pub fn advance_time(&self) {
+    //     let mut index = self.current_index.lock().unwrap();
+    //     if *index < self.historical_data.len() - 1 {
+    //         *index += 1;
+    //     }
+    // }
 
     pub fn get_current_timestamp(&self) -> DateTime<Utc> {
         let index = *self.current_index.lock().unwrap();
@@ -47,22 +50,16 @@ impl MockClient {
         let mut current_index = self.current_index.lock().unwrap();
         *current_index = index.min(self.historical_data.len().saturating_sub(1));
     }
-
-    pub fn load_historical_data(file_path: &str) -> anyhow::Result<Vec<HistoricalData>> {
-        let content = std::fs::read_to_string(file_path)?;
-        let data: Vec<HistoricalData> = serde_json::from_str(&content)?;
-        Ok(data)
-    }
 }
 
 #[async_trait]
 impl ExchangeClient for MockClient {
     async fn get_prices(&self, symbols: &[String]) -> anyhow::Result<Vec<Price>> {
         let index = *self.current_index.lock().unwrap();
-        let current_data = self.historical_data
+        let current_data = self
+            .historical_data
             .get(index)
             .ok_or_else(|| anyhow::anyhow!("No historical data available"))?;
-
 
         let mut prices = Vec::new();
         for symbol in symbols {
@@ -79,8 +76,9 @@ impl ExchangeClient for MockClient {
 
     async fn buy(&self, symbol: &str, amount: Decimal) -> anyhow::Result<OrderResult> {
         let prices = self.get_prices(&[symbol.to_string()]).await?;
-        let price = prices.first()
-            .ok_or_else(|| anyhow::anyhow!("Price not found for {}", symbol))?
+        let price = prices
+            .first()
+            .ok_or_else(|| anyhow::anyhow!("Price not found for {symbol}"))?
             .price;
 
         let quantity = amount / price;
@@ -109,8 +107,9 @@ impl ExchangeClient for MockClient {
 
     async fn sell(&self, symbol: &str, quantity: Decimal) -> anyhow::Result<OrderResult> {
         let prices = self.get_prices(&[symbol.to_string()]).await?;
-        let price = prices.first()
-            .ok_or_else(|| anyhow::anyhow!("Price not found for {}", symbol))?
+        let price = prices
+            .first()
+            .ok_or_else(|| anyhow::anyhow!("Price not found for {symbol}"))?
             .price;
 
         let amount = quantity * price;
@@ -137,8 +136,8 @@ impl ExchangeClient for MockClient {
         })
     }
 
-    async fn get_balance(&self, asset: &str) -> anyhow::Result<Decimal> {
-        let balances = self.balances.lock().unwrap();
-        Ok(balances.get(asset).copied().unwrap_or(Decimal::ZERO))
-    }
+    // async fn get_balance(&self, asset: &str) -> anyhow::Result<Decimal> {
+    //     let balances = self.balances.lock().unwrap();
+    //     Ok(balances.get(asset).copied().unwrap_or(Decimal::ZERO))
+    // }
 }

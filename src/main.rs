@@ -1,20 +1,20 @@
+mod backtest;
+mod basket;
+mod bot;
 mod config;
 mod exchange;
-mod basket;
 mod fear_greed;
 mod state;
-mod bot;
-mod backtest;
 
+use backtest::Backtester;
+use bot::TradingBot;
 use clap::{Parser, Subcommand};
 use config::{Config, TradingMode};
 use exchange::mock::MockClient;
 use state::BotState;
-use bot::TradingBot;
-use backtest::Backtester;
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use std::collections::HashMap;
 
 #[derive(Parser)]
 #[command(name = "binstra")]
@@ -94,8 +94,14 @@ async fn run_trading_bot(config: Config) -> anyhow::Result<()> {
 
     // Create mock client for testing
     let mut initial_balances = HashMap::new();
-    initial_balances.insert(config.assets.fiat_symbol.clone(), config.assets.initial_fiat_amount);
-    initial_balances.insert(config.assets.crypto_symbol.clone(), config.assets.initial_crypto_amount);
+    initial_balances.insert(
+        config.assets.fiat_symbol.clone(),
+        config.assets.initial_fiat_amount,
+    );
+    initial_balances.insert(
+        config.assets.crypto_symbol.clone(),
+        config.assets.initial_crypto_amount,
+    );
 
     let mock_client = MockClient::new(Vec::new(), initial_balances);
     let exchange = Arc::new(Mutex::new(mock_client));
@@ -108,7 +114,7 @@ async fn run_trading_bot(config: Config) -> anyhow::Result<()> {
 }
 
 async fn run_backtest(config: Config, days: u32) -> anyhow::Result<()> {
-    println!("Running backtest for {} days...", days);
+    println!("Running backtest for {days} days...");
 
     let mut backtester = Backtester::new(config);
     backtester.load_historical_data(days)?;
@@ -118,22 +124,36 @@ async fn run_backtest(config: Config, days: u32) -> anyhow::Result<()> {
 
     // Print results
     println!("\n=== BACKTEST RESULTS ===");
-    println!("Period: {} days ({} to {})", result.period_days, result.start_date.format("%Y-%m-%d"), result.end_date.format("%Y-%m-%d"));
-    println!("Initial Portfolio Value: ${}", result.initial_portfolio_value);
+    println!(
+        "Period: {} days ({} to {})",
+        result.period_days,
+        result.start_date.format("%Y-%m-%d"),
+        result.end_date.format("%Y-%m-%d")
+    );
+    println!(
+        "Initial Portfolio Value: ${}",
+        result.initial_portfolio_value
+    );
     println!("Final Portfolio Value: ${}", result.final_portfolio_value);
-    println!("Total Return: ${} ({:.2}%)", result.total_return, result.total_return_percent);
+    println!(
+        "Total Return: ${} ({:.2}%)",
+        result.total_return, result.total_return_percent
+    );
     println!("Total Trades: {}", result.total_trades);
     println!("Profitable Trades: {}", result.profitable_trades);
     println!("Win Rate: {:.2}%", result.win_rate);
-    println!("Max Drawdown: ${} ({:.2}%)", result.max_drawdown, result.max_drawdown_percent);
+    println!(
+        "Max Drawdown: ${} ({:.2}%)",
+        result.max_drawdown, result.max_drawdown_percent
+    );
     println!("========================");
 
     Ok(())
 }
 
 async fn fetch_historical_data(days: u32) -> anyhow::Result<()> {
-    println!("Fetching historical data for {} days...", days);
+    println!("Fetching historical data for {days} days...");
     println!("Please run the Python script manually:");
-    println!("cd backtest-scripts && python3 fetch_historical_data.py --days {}", days);
+    println!("cd backtest-scripts && python3 fetch_historical_data.py --days {days}");
     Ok(())
 }

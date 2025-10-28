@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
-use rust_decimal::Decimal;
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Basket {
@@ -13,15 +13,6 @@ pub struct Basket {
 }
 
 impl Basket {
-    pub fn new(
-        asset: String,
-        quantity: Decimal,
-        buy_price: Decimal,
-        target_profit_percent: Decimal,
-    ) -> Self {
-        Self::new_with_time(asset, quantity, buy_price, target_profit_percent, Utc::now())
-    }
-
     pub fn new_with_time(
         asset: String,
         quantity: Decimal,

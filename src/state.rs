@@ -1,8 +1,8 @@
 use crate::basket::Basket;
-use serde::{Deserialize, Serialize};
-use rust_decimal::Decimal;
-use std::collections::HashMap;
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BotState {
@@ -26,10 +26,14 @@ pub struct ClosedBasket {
 }
 
 impl BotState {
-    pub fn new(initial_fiat: Decimal, crypto_symbol: String, initial_crypto_amount: Decimal) -> Self {
+    pub fn new(
+        initial_fiat: Decimal,
+        crypto_symbol: String,
+        initial_crypto_amount: Decimal,
+    ) -> Self {
         let mut crypto_balances = HashMap::new();
         crypto_balances.insert(crypto_symbol, initial_crypto_amount);
-        
+
         Self {
             fiat_balance: initial_fiat,
             crypto_balances,
@@ -84,7 +88,7 @@ impl BotState {
             self.last_update = Utc::now();
             Ok(())
         } else {
-            Err(anyhow::anyhow!("Basket with id {} not found", basket_id))
+            Err(anyhow::anyhow!("Basket with id {basket_id} not found"))
         }
     }
 
@@ -110,10 +114,12 @@ impl BotState {
 
     pub fn get_statistics(&self) -> BotStatistics {
         let total_trades = self.closed_baskets.len() as u32;
-        let profitable_trades = self.closed_baskets.iter()
+        let profitable_trades = self
+            .closed_baskets
+            .iter()
             .filter(|cb| cb.profit > Decimal::ZERO)
             .count() as u32;
-        
+
         let win_rate = if total_trades > 0 {
             (profitable_trades as f64 / total_trades as f64) * 100.0
         } else {
@@ -121,9 +127,7 @@ impl BotState {
         };
 
         let average_profit_percent = if !self.closed_baskets.is_empty() {
-            let sum: Decimal = self.closed_baskets.iter()
-                .map(|cb| cb.profit_percent)
-                .sum();
+            let sum: Decimal = self.closed_baskets.iter().map(|cb| cb.profit_percent).sum();
             sum / Decimal::from(self.closed_baskets.len())
         } else {
             Decimal::ZERO
@@ -140,13 +144,21 @@ impl BotState {
     }
 
     pub fn update_recent_high(&mut self, symbol: &str, current_price: Decimal) {
-        let recent_high = self.recent_highs.entry(symbol.to_string()).or_insert(current_price);
+        let recent_high = self
+            .recent_highs
+            .entry(symbol.to_string())
+            .or_insert(current_price);
         if current_price > *recent_high {
             *recent_high = current_price;
         }
     }
 
-    pub fn is_price_dip(&self, symbol: &str, current_price: Decimal, dip_threshold_percent: Decimal) -> bool {
+    pub fn is_price_dip(
+        &self,
+        symbol: &str,
+        current_price: Decimal,
+        dip_threshold_percent: Decimal,
+    ) -> bool {
         if let Some(&recent_high) = self.recent_highs.get(symbol) {
             if recent_high > Decimal::ZERO {
                 let drop_percent = (recent_high - current_price) / recent_high * Decimal::from(100);

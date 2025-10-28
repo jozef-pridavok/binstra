@@ -1,35 +1,17 @@
-use crate::exchange::{ExchangeClient, Price, OrderResult, OrderSide};
+use crate::exchange::{ExchangeClient, OrderResult, Price};
 use async_trait::async_trait;
+use chrono::Utc;
 use rust_decimal::Decimal;
-use chrono::{DateTime, Utc};
 
 pub struct OkxClient {
-    api_key: String,
-    api_secret: String,
-    passphrase: String,
-    sandbox: bool,
-    client: reqwest::Client,
+    // api_key: String,
+    // api_secret: String,
+    // passphrase: String,
+    // sandbox: bool,
+    // client: reqwest::Client,
 }
 
-impl OkxClient {
-    pub fn new(api_key: String, api_secret: String, passphrase: String, sandbox: bool) -> Self {
-        Self {
-            api_key,
-            api_secret,
-            passphrase,
-            sandbox,
-            client: reqwest::Client::new(),
-        }
-    }
-
-    fn get_base_url(&self) -> &str {
-        if self.sandbox {
-            "https://www.okx.com"
-        } else {
-            "https://www.okx.com"
-        }
-    }
-}
+impl OkxClient {}
 
 #[async_trait]
 impl ExchangeClient for OkxClient {
@@ -56,8 +38,8 @@ impl ExchangeClient for OkxClient {
         todo!("Implement OKX sell order")
     }
 
-    async fn get_balance(&self, _asset: &str) -> anyhow::Result<Decimal> {
-        // Placeholder implementation - would need actual OKX API integration
-        todo!("Implement OKX balance query")
-    }
+    // async fn get_balance(&self, _asset: &str) -> anyhow::Result<Decimal> {
+    //     // Placeholder implementation - would need actual OKX API integration
+    //     todo!("Implement OKX balance query")
+    // }
 }
