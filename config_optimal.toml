@@ -1,0 +1,28 @@
+# Optimized configuration for 365-day BTC trading
+# Generated from parameter optimization on 365-day historical data
+# Best score: 61.26 (Return: 71.79%, Drawdown: 21.06%, Trades: 1075)
+# Optimized for maximum profit with acceptable risk
+
+state_file = "bot_state_optimal.json"
+mode = "Backtest"
+
+[exchange]
+name = "okx"
+api_key = ""
+api_secret = ""
+passphrase = ""
+sandbox = true
+
+[trading]
+basket_count = 75
+profit_threshold_percent = 3.0
+min_investment_percent = 8.0
+max_investment_percent = 20.0
+fear_greed_threshold = 30
+buy_the_dip_percent = 5.0
+
+[assets]
+initial_fiat_amount = 10000.0
+initial_crypto_amount = 0.0
+fiat_symbol = "USDT"
+crypto_symbol = "BTC"

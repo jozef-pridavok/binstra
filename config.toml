@@ -1,0 +1,23 @@
+state_file = "bot_state.json"
+mode = "Backtest"
+
+[exchange]
+name = "okx"
+api_key = ""
+api_secret = ""
+passphrase = ""
+sandbox = true
+
+[trading]
+basket_count = 5
+profit_threshold_percent = 15.0
+min_investment_percent = 5.0
+max_investment_percent = 20.0
+fear_greed_threshold = 40
+buy_the_dip_percent = 5.0
+
+[assets]
+initial_fiat_amount = 10000.0
+initial_crypto_amount = 0.0
+fiat_symbol = "USDT"
+crypto_symbol = "BTC"

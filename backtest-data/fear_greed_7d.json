@@ -1,0 +1,37 @@
+[
+  {
+    "timestamp": "2025-10-20T21:00:00Z",
+    "value": 34,
+    "classification": "Fear"
+  },
+  {
+    "timestamp": "2025-10-21T21:00:00Z",
+    "value": 25,
+    "classification": "Extreme Fear"
+  },
+  {
+    "timestamp": "2025-10-22T21:00:00Z",
+    "value": 27,
+    "classification": "Fear"
+  },
+  {
+    "timestamp": "2025-10-23T21:00:00Z",
+    "value": 30,
+    "classification": "Fear"
+  },
+  {
+    "timestamp": "2025-10-24T21:00:00Z",
+    "value": 37,
+    "classification": "Fear"
+  },
+  {
+    "timestamp": "2025-10-25T21:00:00Z",
+    "value": 40,
+    "classification": "Fear"
+  },
+  {
+    "timestamp": "2025-10-26T21:00:00Z",
+    "value": 51,
+    "classification": "Neutral"
+  }
+]

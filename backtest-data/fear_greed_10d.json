@@ -1,0 +1,52 @@
+[
+  {
+    "timestamp": "2025-10-16T11:32:34.856502Z",
+    "value": 55,
+    "classification": "Neutral"
+  },
+  {
+    "timestamp": "2025-10-17T11:32:34.856502Z",
+    "value": 39,
+    "classification": "Fear"
+  },
+  {
+    "timestamp": "2025-10-18T11:32:34.856502Z",
+    "value": 42,
+    "classification": "Fear"
+  },
+  {
+    "timestamp": "2025-10-19T11:32:34.856502Z",
+    "value": 25,
+    "classification": "Extreme Fear"
+  },
+  {
+    "timestamp": "2025-10-20T11:32:34.856502Z",
+    "value": 73,
+    "classification": "Greed"
+  },
+  {
+    "timestamp": "2025-10-21T11:32:34.856502Z",
+    "value": 6,
+    "classification": "Extreme Fear"
+  },
+  {
+    "timestamp": "2025-10-22T11:32:34.856502Z",
+    "value": 61,
+    "classification": "Greed"
+  },
+  {
+    "timestamp": "2025-10-23T11:32:34.856502Z",
+    "value": 51,
+    "classification": "Neutral"
+  },
+  {
+    "timestamp": "2025-10-24T11:32:34.856502Z",
+    "value": 43,
+    "classification": "Fear"
+  },
+  {
+    "timestamp": "2025-10-25T11:32:34.856502Z",
+    "value": 45,
+    "classification": "Fear"
+  }
+]

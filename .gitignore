@@ -1,0 +1,3 @@
+/target
+bot_state*.json
+backtest-scripts/okx_config.py
